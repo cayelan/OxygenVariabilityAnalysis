@@ -198,7 +198,7 @@ ggplot(compare_a, aes(x = slope, fill = Depth)) +
   geom_vline(xintercept = median(surface1$slope[which(surface1$p_value<0.05)]), color = "blue", linetype = "dashed") +
   geom_vline(xintercept = median(surface2$slope[which(surface2$p_value<0.05)]), color = "red", linetype = "dashed") +
   geom_vline(xintercept = 0, color = "black", linetype = "solid") +
-  scale_x_continuous(limits = c(-0.02,0.02)) +
+  scale_x_continuous(limits = c(-0.022,0.022)) +
   xlab("Trend in surface dissolved oxygen variability (/year)") +
   ylab("Density")
 
