@@ -144,7 +144,74 @@ summary_notannual <- bottom_within %>%
 sum(summary_notannual$trend) #14/14 lakes have positive trend in sub-annual variance in median DO (variance is increasing); 
 # 0 lakes have decreasing variance
 
-##make plots
+
+
+####make histogram plots####
+#generate 2 figures: 1 among year and 1 within-year, 2 density plots superimposed for surface/bottom
+
+# turn data to long form
+surface1 <- surface %>% 
+  add_column(Depth = "Surface_AmongYears")
+surface2 <- surface_within %>% 
+  add_column(Depth = "Surface_WithinYears")
+
+bottom1 <- bottom %>% 
+  add_column(Depth = "Bottom_AmongYears")
+bottom2 <- bottom_within %>% 
+  add_column(Depth = "Bottom_WithinYears")
+
+compare <- rbind(surface1, surface2)
+compare1 <- rbind(bottom1, bottom2)
+
+#Using all data, including lakes with no change in data
+# Overlaying histograms of surface patterns
+ggplot(compare, aes(x = slope, fill = Depth)) +
+  geom_density(alpha = .5) +
+  geom_vline(xintercept = median(surface1$slope), color = "blue", linetype = "dashed") +
+  geom_vline(xintercept = median(surface2$slope), color = "red", linetype = "dashed") +
+  geom_vline(xintercept = 0, color = "black", linetype = "solid") +
+  scale_x_continuous(limits = c(-0.012,0.012)) +
+  xlab("Trend in surface dissolved oxygen variability (/year)") +
+  ylab("Density")
+
+# Overlaying histograms of surface patterns
+ggplot(compare1, aes(x = slope, fill = Depth)) +
+  geom_density(alpha = .5) +
+   geom_vline(xintercept = median(bottom1$slope), color = "red", linetype = "dashed") +
+    geom_vline(xintercept = median(bottom2$slope), color = "blue", linetype = "dashed") +
+  geom_vline(xintercept = 0, color = "black", linetype = "solid") +
+  scale_x_continuous(limits = c(-0.1,0.1)) +
+  xlab("Trend in bottom dissolved oxygen variability (/year)") +
+  ylab("Density")
+
+
+#now, let's filter out the lakes that show a significant trend over time
+compare_a <- rbind(surface1, surface2) %>% 
+  filter(p_value<0.05)
+compare1_a <- rbind(bottom1, bottom2) %>% 
+  filter(p_value<0.05)
+
+#Using all data, including lakes with no change in data
+# Overlaying histograms of surface patterns
+ggplot(compare_a, aes(x = slope, fill = Depth)) +
+  geom_density(alpha = .5) +
+  geom_vline(xintercept = median(surface1$slope[which(surface1$p_value<0.05)]), color = "blue", linetype = "dashed") +
+  geom_vline(xintercept = median(surface2$slope[which(surface2$p_value<0.05)]), color = "red", linetype = "dashed") +
+  geom_vline(xintercept = 0, color = "black", linetype = "solid") +
+  scale_x_continuous(limits = c(-0.02,0.02)) +
+  xlab("Trend in surface dissolved oxygen variability (/year)") +
+  ylab("Density")
+
+# Overlaying histograms of surface patterns
+ggplot(compare1_a, aes(x = slope, fill = Depth)) +
+  geom_density(alpha = .5) +
+  geom_vline(xintercept = median(bottom1$slope[which(bottom1$p_value<0.05)]), color = "red", linetype = "dashed") +
+  geom_vline(xintercept = median(bottom2$slope[which(bottom2$p_value<0.05)]), color = "blue", linetype = "dashed") +
+  geom_vline(xintercept = 0, color = "black", linetype = "solid") +
+  scale_x_continuous(limits = c(-0.12,0.12)) +
+  xlab("Trend in bottom dissolved oxygen variability (/year)") +
+  ylab("Density")
+
 
 
 
