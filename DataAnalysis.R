@@ -20,6 +20,7 @@ raw_data <- read.csv("Raw_Data.csv", header=T) %>%
 no_obs <- 3 #minimum number of observations within a year to be included in analysis
 
 ####multi-annual surface####
+# Also referred to as the among-year variability analysis
 # Let's first analyze variability in surface, multi-annual oxygen (1 m depth)
 # following methods of Cusser et al. 2021 Ecol Letters which used rolling windows of 3 yrs
 # and found that temporal ecological trends took on average 9.66 years to reach a
@@ -57,6 +58,7 @@ sum(summary_annual$trend) #27/76 (36%) lakes have positive trend in multi-annual
 
 ####multi-annual bottom####
 #let's repeat this analysis with bottom, multi-annual oxygen (bottom depth)
+#within-year bottom analysis
 bottom <- raw_data %>% 
   group_by(lake_id, year) %>% 
   filter(depth==max(depth)) %>% 
@@ -119,6 +121,7 @@ sum(summary_notannual$trend) #18/37 lakes have positive trend in sub-annual vari
 
 ####within-year bottom####
 #let's repeat with bottom, within-annual oxygen (bottom depth)
+#referred to as among-year analysis
 bottom_within <- raw_data %>% 
   group_by(lake_id, year) %>% 
   filter(depth==max(depth)) %>% 
