@@ -3,7 +3,7 @@
 # Cayelan Carey, created 1 April 2022
 
 #load packages
-pacman::p_load(tidyverse, lubridate, zoo, goeveg, magrittr)
+pacman::p_load(tidyverse, lubridate, zoo, goeveg, magrittr, patchwork)
 
 #download GLEON dissolved oxygen data from EDI repository
 inUrl1  <- "https://pasta.lternet.edu/package/data/eml/edi/698/3/ca7001cba78a64c0ad0193580f478353" 
@@ -19,9 +19,10 @@ raw_data <- read.csv("Raw_Data.csv", header=T) %>%
 
 no_obs <- 3 #minimum number of observations within a year to be included in analysis
 
-####multi-annual surface####
-# Also referred to as the among-year surface DO variability analysis
-# Let's first analyze variability in surface, multi-annual oxygen (1 m depth)
+
+####inter-annual surface####
+# Also referred to as the multi-annual & among-year surface DO variability analysis
+# Let's first analyze variability in surface, inter-annual oxygen (1 m depth)
 # following methods of Cusser et al. 2021 Ecol Letters which used rolling windows of 3 yrs
 # and found that temporal ecological trends took on average 9.66 years to reach a
 # critical temporal threshold and achieve consistent results
@@ -56,8 +57,9 @@ summary_annual_surface_among <- surface %>%
 sum(summary_annual_surface_among$trend) #27/76 (36%) lakes have positive trend in multi-annual variance in median DO (variance is increasing); 
 # 49/76 (64%) lakes have decreasing variance)
 
-####multi-annual bottom####
-#let's repeat this analysis with bottom, multi-annual oxygen (bottom depth)
+
+####inter-annual bottom####
+#let's repeat this analysis with bottom, inter-annual oxygen (bottom depth)
 #among-year bottom analysis
 bottom_among <- raw_data %>% 
   group_by(lake_id, year) %>% 
@@ -90,10 +92,9 @@ sum(summary_annual_bottom_among$trend) #10/19 lakes have positive trend in multi
 # 9 lakes have decreasing variance)
 
 
-
-####within-year surface####
+####intra-annual surface####
 #now let's do analyze surface, within-year oxygen (1 m depth)
-#calculate within-year CV, then look at slope over time
+#calculate intra-annual (within-year) CV, then look at slope over time
 surface_within <- raw_data %>% 
   group_by(lake_id, year) %>% 
   filter(depth==1) %>% 
@@ -119,8 +120,8 @@ sum(summary_annual_surface_within$trend) #18/37 lakes have positive trend in sub
 # 19 lakes have decreasing variance)
 
 
-####within-year bottom####
-#let's repeat with bottom, within-annual oxygen (bottom depth)
+####intra-annual bottom####
+#let's repeat with bottom, intra-annual oxygen (bottom depth)
 #referred to as within-year analysis
 bottom_within <- raw_data %>% 
   group_by(lake_id, year) %>% 
@@ -150,22 +151,23 @@ sum(summary_annual_bottom_within$trend) #14/14 lakes have positive trend in sub-
 
 
 ####make histogram plots####
-#generate 2 figures: 1 among year and 1 within-year, 2 density plots superimposed for surface/bottom
+#generate 2 figures: 1 inter-annual and 1 intra-annual, 2 density plots superimposed for surface/bottom
 
 # turn data to long form
 surface1 <- surface %>% 
-  add_column(Depth = "Surface_AmongYears")
+  add_column(Depth = "Surface_Inter-annual")
 surface2 <- surface_within %>% 
-  add_column(Depth = "Surface_WithinYears")
+  add_column(Depth = "Surface_Intra-annual")
 
-bottom1 <- bottom %>% 
-  add_column(Depth = "Bottom_AmongYears")
+bottom1 <- bottom_among %>% 
+  add_column(Depth = "Bottom_Inter-annual")
 bottom2 <- bottom_within %>% 
-  add_column(Depth = "Bottom_WithinYears")
+  add_column(Depth = "Bottom_Intra-annual")
 
 compare <- rbind(surface1, surface2)
 compare1 <- rbind(bottom1, bottom2)
-# 
+
+# Previous data visualization! 
 # #Using all data, including lakes with no change in data
 # # Overlaying histograms of surface patterns
 # ggplot(compare, aes(x = slope, fill = Depth)) +
@@ -187,16 +189,15 @@ compare1 <- rbind(bottom1, bottom2)
 #   xlab("Trend in bottom dissolved oxygen variability (/year)") +
 #   ylab("Density")
 
-
 #now, let's filter out the lakes to focus on those that show a significant trend over time
 compare_a <- rbind(surface1, surface2) %>% 
   filter(p_value<0.05) %>% 
   mutate(depth = "surface",
-         split = ifelse(Depth == "Surface_AmongYears", "Among Year", "Within Year"))
+         split = ifelse(Depth == "Surface_Inter-annual", "Inter-annual", "Intra-annual"))
 compare1_a <- rbind(bottom1, bottom2) %>% 
   filter(p_value<0.05) %>% 
   mutate(depth = "bottom",
-         split = ifelse(Depth == "Bottom_AmongYears", "Among Year", "Within Year"))
+         split = ifelse(Depth == "Bottom_Inter-annual", "Inter-annual", "Intra-annual"))
 
 combined <- bind_rows(compare_a, compare1_a) %>% 
   select(-Depth)
@@ -210,7 +211,7 @@ p1 <- combined %>% filter(depth == "surface") %>%
   geom_vline(xintercept = median(surface2$slope[which(surface2$p_value<0.05)]), color = "red", linetype = "dashed") +
   geom_vline(xintercept = 0, color = "black", linetype = "solid") +
   scale_x_continuous(limits = c(-0.022,0.022)) +
-  labs(x = "", y = "Density", title = "(a) Surface") +
+  labs(x = "", y = "Density", title = "a) Surface") +
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
@@ -219,6 +220,7 @@ p1 <- combined %>% filter(depth == "surface") %>%
   
 
 xlabel = expression("Trend in dissolved oxygen variablity (year^-1)")
+
 # Overlaying histograms of surface patterns
 p2 <- combined %>% filter(depth == "bottom") %>% 
   ggplot(aes(x = slope, fill = split)) +
@@ -227,7 +229,7 @@ p2 <- combined %>% filter(depth == "bottom") %>%
   geom_vline(xintercept = median(bottom2$slope[which(bottom2$p_value<0.05)]), color = "blue", linetype = "dashed") +
   geom_vline(xintercept = 0, color = "black", linetype = "solid") +
   scale_x_continuous(limits = c(-0.12,0.12)) +
-  labs(x = bquote('Trend in dissolved oxygen variability ('*year^-1*')'), y = "Density", title = "(b) Bottom") +
+  labs(x = bquote('Trend in dissolved oxygen variability ('*year^-1*')'), y = "Density", title = "b) Bottom") +
   theme_bw() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         legend.position = "none")
@@ -263,6 +265,4 @@ lakesIncreasingBottomVar <- sort(unique(lakesIncreasingBottomVar))
 intersect(lakesIncreasingBottomVar,lakesDecliningSurfaceVar)
 #6 lakes exhibited both increasing bottom variability and declining surface variability
 #(144 158 169 216 221 415)
-
-
 
