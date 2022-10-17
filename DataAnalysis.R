@@ -158,9 +158,10 @@ sum(summary_annual_bottom_within$trend) #14/14 lakes have positive trend in sub-
 #For N>=5 obs, 8/8 lakes have increasing variance over time
 
 
-
+############################################33
 ####make histogram plots####
 #generate 2 figures: 1 inter-annual and 1 intra-annual, 2 density plots superimposed for surface/bottom
+#first with only significant trends over time
 
 # turn data to long form
 surface1 <- surface %>% 
@@ -189,7 +190,6 @@ compare1_a <- rbind(bottom1, bottom2) %>%
 combined <- bind_rows(compare_a, compare1_a) %>% 
   select(-Depth)
 
-#Using all data, including lakes with no change in data
 # Overlaying histograms of surface patterns
 p1 <- combined %>% filter(depth == "surface") %>% 
   ggplot(aes(x = slope, fill = split)) +
@@ -225,8 +225,108 @@ library(patchwork)
 p = p1 / p2
 
 ggsave("Fig1.pdf", plot = p, device = "pdf", width = 4, height = 6)
+#ggsave("SI_Fig1.pdf", plot = p, device = "pdf", width = 4, height = 6)
+
+#now, let's filter out the lakes to focus on those that show a significant trend over time
+compare_a <- rbind(surface1, surface2) %>% 
+  filter(p_value<0.05) %>% 
+  mutate(depth = "surface",
+         split = ifelse(Depth == "Surface_Inter-annual", "Inter-annual", "Intra-annual"))
+compare1_a <- rbind(bottom1, bottom2) %>% 
+  filter(p_value<0.05) %>% 
+  mutate(depth = "bottom",
+         split = ifelse(Depth == "Bottom_Inter-annual", "Inter-annual", "Intra-annual"))
+
+combined <- bind_rows(compare_a, compare1_a) %>% 
+  select(-Depth)
+
+# Overlaying histograms of surface patterns
+p1 <- combined %>% filter(depth == "surface") %>% 
+  ggplot(aes(x = slope, fill = split)) +
+  geom_density(alpha = .5) +
+  geom_vline(xintercept = median(surface1$slope[which(surface1$p_value<0.05)]), color = "blue", linetype = "dashed") +
+  geom_vline(xintercept = median(surface2$slope[which(surface2$p_value<0.05)]), color = "red", linetype = "dashed") +
+  geom_vline(xintercept = 0, color = "black", linetype = "solid") +
+  scale_x_continuous(limits = c(-0.022,0.022)) +
+  labs(x = "", y = "Density", title = "a) Surface") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        legend.position = c(0.18, 0.83),
+        legend.title =element_blank())
+
+xlabel = expression("Trend in dissolved oxygen variablity (year^-1)")
+
+# Overlaying histograms of surface patterns
+p2 <- combined %>% filter(depth == "bottom") %>% 
+  ggplot(aes(x = slope, fill = split)) +
+  geom_density(alpha = .5) +
+  geom_vline(xintercept = median(bottom1$slope[which(bottom1$p_value<0.05)]), color = "red", linetype = "dashed") +
+  geom_vline(xintercept = median(bottom2$slope[which(bottom2$p_value<0.05)]), color = "blue", linetype = "dashed") +
+  geom_vline(xintercept = 0, color = "black", linetype = "solid") +
+  scale_x_continuous(limits = c(-0.12,0.12)) +
+  labs(x = bquote('Trend in dissolved oxygen variability ('*year^-1*')'), y = "Density", title = "b) Bottom") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position = "none")
+
+library(patchwork)
+
+p = p1 / p2
+
+ggsave("Fig1.pdf", plot = p, device = "pdf", width = 4, height = 6)
+#ggsave("SI_Fig1.pdf", plot = p, device = "pdf", width = 4, height = 6)
+#repeat the same analysis as above but for no_obs=5 on line 20
 
 
+################################################################
+#now, let's leave in all lakes to repeat the analysis for SI Fig 2
+compare_a <- rbind(surface1, surface2) %>% 
+  #filter(p_value<0.05) %>% 
+  mutate(depth = "surface",
+         split = ifelse(Depth == "Surface_Inter-annual", "Inter-annual", "Intra-annual"))
+compare1_a <- rbind(bottom1, bottom2) %>% 
+  #filter(p_value<0.05) %>% 
+  mutate(depth = "bottom",
+         split = ifelse(Depth == "Bottom_Inter-annual", "Inter-annual", "Intra-annual"))
+combined <- bind_rows(compare_a, compare1_a) %>% 
+  select(-Depth)
+
+# Overlaying histograms of surface patterns
+p1 <- combined %>% filter(depth == "surface") %>% 
+  ggplot(aes(x = slope, fill = split)) +
+  geom_density(alpha = .5) +
+  geom_vline(xintercept = median(surface1$slope), color = "blue", linetype = "dashed") +
+  geom_vline(xintercept = median(surface2$slope), color = "red", linetype = "dashed") +
+  geom_vline(xintercept = 0, color = "black", linetype = "solid") +
+  scale_x_continuous(limits = c(-0.01,0.01)) +
+  labs(x = "", y = "Density", title = "a) Surface") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        legend.position = c(0.18, 0.83),
+        legend.title =element_blank())
+
+xlabel = expression("Trend in dissolved oxygen variablity (year^-1)")
+
+# Overlaying histograms of surface patterns
+p2 <- combined %>% filter(depth == "bottom") %>% 
+  ggplot(aes(x = slope, fill = split)) +
+  geom_density(alpha = .5) +
+  geom_vline(xintercept = median(bottom1$slope), color = "red", linetype = "dashed") +
+  geom_vline(xintercept = median(bottom2$slope), color = "blue", linetype = "dashed") +
+  geom_vline(xintercept = 0, color = "black", linetype = "solid") +
+  scale_x_continuous(limits = c(-0.08,0.08)) +
+  labs(x = bquote('Trend in dissolved oxygen variability ('*year^-1*')'), y = "Density", title = "b) Bottom") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position = "none")
+
+library(patchwork)
+
+p = p1 / p2
+
+ggsave("SI_Fig2.pdf", plot = p, device = "pdf", width = 4, height = 6)
 
 
 
@@ -243,12 +343,29 @@ lakesDecliningSurfaceVar <- c(summary_annual_surface_among$lake_id[which(summary
 #create a vector of lakes with declining within OR among year variability in surface waters
 lakesDecliningSurfaceVar <- sort(unique(lakesDecliningSurfaceVar)) #removed duplicated elements
 
+
+lakesIncreasingSurfaceVar <- c(summary_annual_surface_among$lake_id[which(summary_annual_surface_among$trend==1)],
+                              summary_annual_surface_within$lake_id[which(summary_annual_surface_within$trend==1)]) 
+#create a vector of lakes with increasing within OR among year variability in surface waters
+lakesIncreasingSurfaceVar <- sort(unique(lakesIncreasingSurfaceVar)) #removed duplicated elements
+
+
 lakesIncreasingBottomVar <- c(summary_annual_bottom_among$lake_id[which(summary_annual_bottom_among$trend==1)],
                               summary_annual_bottom_within$lake_id[which(summary_annual_bottom_within$trend==1)]) 
 lakesIncreasingBottomVar <- sort(unique(lakesIncreasingBottomVar))
 #create a vector of lakes with increasing within OR among year variability in bottom waters
 
+lakesDecliningBottomVar <- c(summary_annual_bottom_among$lake_id[which(summary_annual_bottom_among$trend<1)],
+                              summary_annual_bottom_within$lake_id[which(summary_annual_bottom_within$trend<1)]) 
+lakesDecliningBottomVar <- sort(unique(lakesDecliningBottomVar))
+#create a vector of lakes with increasing within OR among year variability in bottom waters
+
+
 intersect(lakesIncreasingBottomVar,lakesDecliningSurfaceVar)
-#6 lakes exhibited both increasing bottom variability and declining surface variability
+#6 lakes exhibited both increasing bottom variability AND declining surface variability
 #(144 158 169 216 221 415)
+
+intersect(lakesIncreasingBottomVar,lakesIncreasingSurfaceVar)
+intersect(lakesDecliningBottomVar,lakesDecliningSurfaceVar)
+intersect(lakesDecliningBottomVar,lakesIncreasingSurfaceVar)
 
