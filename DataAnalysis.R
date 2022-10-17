@@ -331,7 +331,7 @@ ggsave("SI_Fig2.pdf", plot = p, device = "pdf", width = 4, height = 6)
 
 
 
-#####comparing lakes with diverging surface & bottom patterns
+#####comparing lakes with diverging surface & bottom patterns for text references
 summary_annual_surface_among #lakes with increasing among-year surface water variability
 summary_annual_surface_within #lakes with increasing within-year surface water variability
 summary_annual_bottom_among #lakes with increasing among-year bottom water variability
@@ -369,3 +369,26 @@ intersect(lakesIncreasingBottomVar,lakesIncreasingSurfaceVar)
 intersect(lakesDecliningBottomVar,lakesDecliningSurfaceVar)
 intersect(lakesDecliningBottomVar,lakesIncreasingSurfaceVar)
 
+#for analyzing lakes with significant change in one layer but not the other
+surface
+surface_within
+bottom_among
+bottom_within
+
+#bottom lakes with no significant change
+lakesNoBottomChange <- c(bottom_among$lake_id[which(bottom_among$p_value>=0.05)],
+                         bottom_within$lake_id[which(bottom_within$p_value>=0.05)])
+lakesNoBottomChange <- sort(unique(lakesNoBottomChange))
+
+#surface lakes with no significant change
+lakesNoSurfaceChange <- c(surface$lake_id[which(surface$p_value>=0.05)],
+                         surface_within$lake_id[which(surface_within$p_value>=0.05)])
+lakesNoSurfaceChange <- sort(unique(lakesNoSurfaceChange))
+
+#one layer has significant change, the other doesn't
+OneLayerChange <- c(intersect(lakesNoBottomChange,lakesIncreasingSurfaceVar), 
+                    intersect(lakesNoBottomChange,lakesDecliningSurfaceVar),
+                    intersect(lakesNoSurfaceChange,lakesIncreasingBottomVar),
+                    intersect(lakesNoSurfaceChange,lakesDecliningBottomVar))
+OneLayerChange <- sort(unique(OneLayerChange))
+length(OneLayerChange) #41 lakes exhibited significant change in one layer but not the other layer
