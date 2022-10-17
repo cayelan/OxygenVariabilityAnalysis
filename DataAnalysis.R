@@ -3,9 +3,9 @@
 # Cayelan Carey, created 1 April 2022
 
 #load packages
-pacman::p_load(tidyverse, lubridate, zoo, goeveg, magrittr, patchwork)
+pacman::p_load(tidyverse, lubridate, zoo, goeveg, magrittr, patchwork, trend)
 
-#download GLEON dissolved oxygen data from EDI repository
+#download GLEON dissolved oxygen data from EDI repository (Stetler et al. 2021)
 inUrl1  <- "https://pasta.lternet.edu/package/data/eml/edi/698/3/ca7001cba78a64c0ad0193580f478353" 
 infile1 <- paste0(getwd(),"/Raw_Data.csv")
 download.file(inUrl1,infile1,method="curl", extra = '-k')
@@ -21,7 +21,7 @@ no_obs <- 3 #minimum number of observations within a year to be included in anal
 
 
 ####inter-annual surface####
-# Also referred to as the multi-annual & among-year surface DO variability analysis
+# Also referred to as the multi-annual or among-year surface DO variability analysis
 # Let's first analyze variability in surface, inter-annual oxygen (1 m depth)
 # following methods of Cusser et al. 2021 Ecol Letters which used rolling windows of 3 yrs
 # and found that temporal ecological trends took on average 9.66 years to reach a
@@ -54,8 +54,10 @@ summary_annual_surface_among <- surface %>%
   filter(p_value<0.05) %>% #76 out of 226 lakes have significant changes over time 
   mutate(trend = ifelse(slope>0, 1, 0)) #if slope is greater than 1, value of 1, otherwise zero
 
-sum(summary_annual_surface_among$trend) #27/76 (36%) lakes have positive trend in multi-annual variance in median DO (variance is increasing); 
+sum(summary_annual_surface_among$trend) 
+# for n>=3 obs, 27/76 (36%) lakes have positive trend in multi-annual variance in median DO (variance is increasing); 
 # 49/76 (64%) lakes have decreasing variance)
+# for >=5 obs, 16/55 (29%) have positive trend in variance; 71% have decreasing variance
 
 
 ####inter-annual bottom####
@@ -76,10 +78,11 @@ bottom_among <- raw_data %>%
             p_value = ifelse(n() >= 10, summary(lm(roll ~ year))$coefficients[2,4], NA)) %>% 
   drop_na() 
 #76 lakes total that had at least 10 years of oxygen data at the deepest lake sampling depth 
-#with consistently >3 observations/yr
+#with consistently >=3 observations/yr
+#for >=5 obs/yr, 41 lakes total with data that spanned 10 yrs
 
-length(which(bottom_among$slope>0)) #36/76 increasing variability
-length(which(bottom_among$slope<0)) #40/76 decreasing variability
+length(which(bottom_among$slope>0)) #36/76 increasing variability for n>=3 obs
+length(which(bottom_among$slope<0)) #40/76 decreasing variability for n>=3 obs
 
 hist(bottom_among$slope)
 hist(bottom_among$slope[which(bottom_among$p_value<0.05)])
@@ -88,8 +91,10 @@ summary_annual_bottom_among <- bottom_among %>%
   filter(p_value<0.05) %>% #19 out of 76 lakes have significant changes over time 
   mutate(trend = ifelse(slope>0, 1, 0)) #if slope is greater than 1, value of 1, otherwise zero
 
-sum(summary_annual_bottom_among$trend) #10/19 lakes have positive trend in multi-annual variance in median DO (variance is increasing); 
+sum(summary_annual_bottom_among$trend) 
+# for n>=3 obs, 10/19 lakes have positive trend in multi-annual variance in median DO (variance is increasing); 
 # 9 lakes have decreasing variance)
+# for n>=5 obs, 7/15 have positive trend; 8 have decreasing variance
 
 
 ####intra-annual surface####
@@ -107,17 +112,19 @@ surface_within <- raw_data %>%
   drop_na() %>% 
   summarise(slope = ifelse(n() >= 10, lm(cv_do ~ year)$coefficients[2], NA),
             p_value = ifelse(n() >= 10, summary(lm(cv_do ~ year))$coefficients[2,4], NA)) %>% 
-  drop_na() #247 lakes total
+  drop_na() #247 lakes total for n>=3 obs, 200 lakes for n>=5 obs
 
 hist(surface_within$slope)
 hist(surface_within$slope[which(surface_within$p_value<0.05)])
 
 summary_annual_surface_within <- surface_within %>% 
-  filter(p_value<0.05) %>% #37 out of 247 lakes have significant changes over time 
-  mutate(trend = ifelse(slope>0, 1, 0)) #if slope is greater than 1, value of 1, otherwise zero
+  filter(p_value<0.05) %>% #for N>=3 obs, 37 out of 247 lakes have significant changes over time 
+  mutate(trend = ifelse(slope>0, 1, 0)) #if slope is greater than 1, value of 1, otherwise zero;
+#for n>=5 obs, 32 lakes have significant changes over time
 
-sum(summary_annual_surface_within$trend) #18/37 lakes have positive trend in sub-annual variance in median DO (variance is increasing); 
-# 19 lakes have decreasing variance)
+sum(summary_annual_surface_within$trend) #for N>=3 obs, 18/37 lakes have positive trend in sub-annual 
+# variance in median DO (variance is increasing); 19 lakes have decreasing variance)
+# for N>=5 obs, 14/32 lakes have increasing variance over time
 
 
 ####intra-annual bottom####
@@ -142,11 +149,13 @@ hist(bottom_within$slope)
 hist(bottom_within$slope[which(bottom_within$p_value<0.05)])
 
 summary_annual_bottom_within <- bottom_within %>% 
-  filter(p_value<0.05) %>% #14 out of 93 lakes have significant changes over time 
+  filter(p_value<0.05) %>% #For N>=3 obs, 14 out of 93 lakes have significant changes over time 
   mutate(trend = ifelse(slope>0, 1, 0)) #if slope is greater than 1, value of 1, otherwise zero
+#For N>=5 obs, 8 lakes have significant changes over time
 
-sum(summary_annual_bottom_within$trend) #14/14 lakes have positive trend in sub-annual variance in median DO (variance is increasing); 
-# 0 lakes have decreasing variance
+sum(summary_annual_bottom_within$trend) #14/14 lakes have positive trend in sub-annual variance 
+# in median DO (variance is increasing); 0 lakes have decreasing variance
+#For N>=5 obs, 8/8 lakes have increasing variance over time
 
 
 
