@@ -400,3 +400,5 @@ OneLayerChange <- c(intersect(lakesNoBottomChange,lakesIncreasingSurfaceVar),
                     intersect(lakesNoSurfaceChange,lakesDecliningBottomVar))
 OneLayerChange <- sort(unique(OneLayerChange))
 length(OneLayerChange) #41 lakes exhibited significant change in one layer but not the other layer
+
+#Bravo! You get a cookie! 
