@@ -1,6 +1,7 @@
 #Analyzing variability in dissolved oxygen dynamics in surface and bottom waters 
 # of lakes to accompany SIL Kilman Lecture paper
 # Cayelan Carey, created 1 April 2022
+# last modified 11 September 2023
 
 #load packages
 pacman::p_load(tidyverse, lubridate, zoo, goeveg, magrittr, patchwork, trend)
