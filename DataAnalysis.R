@@ -6,13 +6,13 @@
 pacman::p_load(tidyverse, lubridate, zoo, goeveg, magrittr, patchwork, trend)
 
 #download GLEON dissolved oxygen data from EDI repository (Stetler et al. 2021)
-inUrl1  <- "https://pasta.lternet.edu/package/data/eml/edi/698/3/ca7001cba78a64c0ad0193580f478353" 
+inUrl1  <- "https://pasta.lternet.edu/package/data/eml/edi/698/3/c0aab240966ee30c6a4248c437b53b0d"
 infile1 <- paste0(getwd(),"/Raw_Data.csv")
 download.file(inUrl1,infile1,method="curl", extra = '-k')
 
 #read in raw data file
 raw_data <- read.csv("Raw_Data.csv", header=T) %>% 
-  mutate(date = as.POSIXct(date, format = "%Y-%m-%d"),
+  dplyr::mutate(date = as.POSIXct(date, format = "%Y-%m-%d"),
          year = lubridate::year(date),
          day = lubridate::day(date),
          month = lubridate::month(date))
@@ -158,21 +158,22 @@ sum(summary_annual_bottom_within$trend) #14/14 lakes have positive trend in sub-
 #For N>=5 obs, 8/8 lakes have increasing variance over time
 
 
-############################################33
-####make histogram plots####
-#generate 2 figures: 1 inter-annual and 1 intra-annual, 2 density plots superimposed for surface/bottom
-#first with only significant trends over time
+############################################
+####make histogram figures####
+#For Figure 1, generate 2 panels: 1 inter-annual and 1 intra-annual, 
+# with 2 density plots superimposed for surface/bottom layers
+#Figure 1 includes n=3 lakes (line 20 above) which exhibit only significant trends over time
 
 # turn data to long form
 surface1 <- surface %>% 
-  add_column(Depth = "Surface_Inter-annual")
+  add_column(Depth = "Surface_Interannual")
 surface2 <- surface_within %>% 
-  add_column(Depth = "Surface_Intra-annual")
+  add_column(Depth = "Surface_Intraannual")
 
 bottom1 <- bottom_among %>% 
-  add_column(Depth = "Bottom_Inter-annual")
+  add_column(Depth = "Bottom_Interannual")
 bottom2 <- bottom_within %>% 
-  add_column(Depth = "Bottom_Intra-annual")
+  add_column(Depth = "Bottom_Intraannual")
 
 compare <- rbind(surface1, surface2)
 compare1 <- rbind(bottom1, bottom2)
@@ -181,11 +182,11 @@ compare1 <- rbind(bottom1, bottom2)
 compare_a <- rbind(surface1, surface2) %>% 
   filter(p_value<0.05) %>% 
   mutate(depth = "surface",
-         split = ifelse(Depth == "Surface_Inter-annual", "Inter-annual", "Intra-annual"))
+         split = ifelse(Depth == "Surface_Interannual", "Interannual", "Intraannual"))
 compare1_a <- rbind(bottom1, bottom2) %>% 
   filter(p_value<0.05) %>% 
   mutate(depth = "bottom",
-         split = ifelse(Depth == "Bottom_Inter-annual", "Inter-annual", "Intra-annual"))
+         split = ifelse(Depth == "Bottom_Interannual", "Interannual", "Intraannual"))
 
 combined <- bind_rows(compare_a, compare1_a) %>% 
   select(-Depth)
@@ -205,7 +206,7 @@ p1 <- combined %>% filter(depth == "surface") %>%
         legend.position = c(0.18, 0.83),
         legend.title =element_blank())
   
-xlabel = expression("Trend in dissolved oxygen variablity (year^-1)")
+xlabel = expression("Trend in dissolved oxygen variablity (yr^-1)")
 
 # Overlaying histograms of surface patterns
 p2 <- combined %>% filter(depth == "bottom") %>% 
@@ -215,7 +216,7 @@ p2 <- combined %>% filter(depth == "bottom") %>%
   geom_vline(xintercept = median(bottom2$slope[which(bottom2$p_value<0.05)]), color = "blue", linetype = "dashed") +
   geom_vline(xintercept = 0, color = "black", linetype = "solid") +
   scale_x_continuous(limits = c(-0.12,0.12)) +
-  labs(x = bquote('Trend in dissolved oxygen variability ('*year^-1*')'), y = "Density", title = "b) Bottom") +
+  labs(x = bquote('Trend in dissolved oxygen variability ('*yr^-1*')'), y = "Density", title = "b) Bottom") +
   theme_bw() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         legend.position = "none")
@@ -224,18 +225,23 @@ library(patchwork)
 
 p = p1 / p2
 
-ggsave("Fig1.pdf", plot = p, device = "pdf", width = 4, height = 6)
-#ggsave("SI_Fig1.pdf", plot = p, device = "pdf", width = 4, height = 6)
+ggsave("Fig1.jpg", plot = p, device = "jpg", dpi = 600, width = 4, height = 6)
+#ggsave("Fig1.pdf", plot = p, device = "pdf", width = 4, height = 6)
 
-#now, let's filter out the lakes to focus on those that show a significant trend over time
+
+#####Make SI figures######
+#now, let's rerun the code above - but instead of using n=3 observations, we will 
+# use n=5 observations to check the robustness of our analysis to the number of lakes
+# included. To do this, we will rerun all code from lines 20 to 160 above, but 
+# on line 20 we will instead using n=5 observations for the analysis to make Fig S1
 compare_a <- rbind(surface1, surface2) %>% 
   filter(p_value<0.05) %>% 
   mutate(depth = "surface",
-         split = ifelse(Depth == "Surface_Inter-annual", "Inter-annual", "Intra-annual"))
+         split = ifelse(Depth == "Surface_Interannual", "Interannual", "Intraannual"))
 compare1_a <- rbind(bottom1, bottom2) %>% 
   filter(p_value<0.05) %>% 
   mutate(depth = "bottom",
-         split = ifelse(Depth == "Bottom_Inter-annual", "Inter-annual", "Intra-annual"))
+         split = ifelse(Depth == "Bottom_Interannual", "Interannual", "Intraannual"))
 
 combined <- bind_rows(compare_a, compare1_a) %>% 
   select(-Depth)
@@ -255,7 +261,7 @@ p1 <- combined %>% filter(depth == "surface") %>%
         legend.position = c(0.18, 0.83),
         legend.title =element_blank())
 
-xlabel = expression("Trend in dissolved oxygen variablity (year^-1)")
+xlabel = expression("Trend in dissolved oxygen variability (yr^-1)")
 
 # Overlaying histograms of surface patterns
 p2 <- combined %>% filter(depth == "bottom") %>% 
@@ -265,7 +271,7 @@ p2 <- combined %>% filter(depth == "bottom") %>%
   geom_vline(xintercept = median(bottom2$slope[which(bottom2$p_value<0.05)]), color = "blue", linetype = "dashed") +
   geom_vline(xintercept = 0, color = "black", linetype = "solid") +
   scale_x_continuous(limits = c(-0.12,0.12)) +
-  labs(x = bquote('Trend in dissolved oxygen variability ('*year^-1*')'), y = "Density", title = "b) Bottom") +
+  labs(x = bquote('Trend in dissolved oxygen variability ('*yr^-1*')'), y = "Density", title = "b) Bottom") +
   theme_bw() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         legend.position = "none")
@@ -274,21 +280,23 @@ library(patchwork)
 
 p = p1 / p2
 
-ggsave("Fig1.pdf", plot = p, device = "pdf", width = 4, height = 6)
+ggsave("SI_Fig1.jpg", plot = p, device = "jpg", dpi = 600, width = 4, height = 6)
 #ggsave("SI_Fig1.pdf", plot = p, device = "pdf", width = 4, height = 6)
-#repeat the same analysis as above but for no_obs=5 on line 20
+#this is a repeat of Fig 1 except using no_obs=5 on line 20
 
 
 ################################################################
-#now, let's leave in all lakes to repeat the analysis for SI Fig 2
+#now, to make Fig S2, we'll use n=3 lakes again, but this time, include all lakes
+# not just those who had significant trends in oxygen. To do this, we will rerun 
+# all code from lines 20 to 160 above, using n=3 observations for the analysis
 compare_a <- rbind(surface1, surface2) %>% 
   #filter(p_value<0.05) %>% 
   mutate(depth = "surface",
-         split = ifelse(Depth == "Surface_Inter-annual", "Inter-annual", "Intra-annual"))
+         split = ifelse(Depth == "Surface_Interannual", "Interannual", "Intraannual"))
 compare1_a <- rbind(bottom1, bottom2) %>% 
   #filter(p_value<0.05) %>% 
   mutate(depth = "bottom",
-         split = ifelse(Depth == "Bottom_Inter-annual", "Inter-annual", "Intra-annual"))
+         split = ifelse(Depth == "Bottom_Interannual", "Interannual", "Intraannual"))
 combined <- bind_rows(compare_a, compare1_a) %>% 
   select(-Depth)
 
@@ -330,8 +338,7 @@ ggsave("SI_Fig2.pdf", plot = p, device = "pdf", width = 4, height = 6)
 
 
 
-
-#####comparing lakes with diverging surface & bottom patterns for text references
+#####comparing lakes with diverging surface & bottom patterns for text references in the manuscript
 summary_annual_surface_among #lakes with increasing among-year surface water variability
 summary_annual_surface_within #lakes with increasing within-year surface water variability
 summary_annual_bottom_among #lakes with increasing among-year bottom water variability
